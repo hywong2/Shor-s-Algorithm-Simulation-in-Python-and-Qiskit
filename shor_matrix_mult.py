@@ -1,3 +1,8 @@
+# Author: Trung Nguyen
+# Affiliation: MSQT Student, San Jose State University
+# Contact: trung.nguyen03@sjsu.edu
+# Date: February 2026
+
 """
 The code implements Shor algorithm by direct matrix multiplication.
 """
@@ -11,6 +16,7 @@ H = np.array([[1, 1], [1, -1]]) / np.sqrt(2)    # Hadamard gate
 Id = np.eye(2)                                  # Identity gate
 
 # Full Permutation Matrix Operator Uai |y> = y.a^{2^i} (mod N)
+# Handle special case of reduced qubit n_target < N
 def permute_power_mod_N(a, i, N, n_target=4):
     power = 2**i
     b = pow(a, power, N)  # a^{2^i} mod N
@@ -19,6 +25,8 @@ def permute_power_mod_N(a, i, N, n_target=4):
     for y in range(size):
         if y < N:  # Only affect states < N
             new_y = (y * b) % N
+            if new_y >= size:	# handle case for reduced n_t
+                new_y = y		# for new_y > 2**n, Inserting Identity 
         else:
             new_y = y  # Insterting identity
         U_ai[new_y, y] = 1.0
@@ -34,27 +42,27 @@ def iqft(n):
 
 def measure_target(state, n_control, n_target):
     """ Returns:
-        measured_y        : the collapsed target value (integer)
-        post_control_state: normalized state vector of Control register after measurement
-        prob_y            : probability of getting this y
+        measured_y        : the collapsed target value 
+        post_control_state: normalized state vector after measurement
+        prob_y            : probability of getting y-value
     """
-    dim_target = 1 << n_target		# store statevector of target register
-    dim_control  = 1 << n_control	# store statevector of control register
+    dim_target = 1 << n_target		# store statevector of target reg
+    dim_control  = 1 << n_control	# store statevector of control reg
     
     # Compute marginal probs for each |y> of target register
     marginal_y = np.zeros(dim_target)
     for y in range(dim_target):
-        indices = np.arange(y, len(state), dim_target) 		# generate sliding y, y + dim_target, ...
-        marginal_y[y] = np.sum(np.abs(state[indices])**2)	# compute marginal prob of y
+        indices = np.arange(y, len(state), dim_target) 		
+        marginal_y[y] = np.sum(np.abs(state[indices])**2)	
        
-    # Sample y according to marginal prob
+    # Measure target register
     measured_y = np.random.choice(dim_target, p=marginal_y / np.sum(marginal_y))
     
-    # Update the statevector in accordance to the measured_y
-    indices_y = np.arange(measured_y, len(state), dim_target) # Now extract the slice corresponding to this y
+    # Update the statevector
+    indices_y = np.arange(measured_y, len(state), dim_target) 
     temp_state = np.zeros_like(state)
     temp_state[indices_y] = state[indices_y]
-    state[:] = temp_state[:]				# update the state
+    state[:] = temp_state[:]				
 
     # normalize statevector
     norm = np.linalg.norm(state)			
@@ -66,8 +74,8 @@ def measure_target(state, n_control, n_target):
 # Shor algorithm realization
 def shor_algorithm(N, a, n_target, n_control, plot):
     """ Returns:  measured_x (the collapsed control value (integer))
-         Display states and probs
-         Plot marginal probability distribution of x, y (On/Off).
+        Display states and probs
+        Plot marginal probability of x, y (On/Off).
     """
 
     # Step 1a: Initialize total statevector (MSB |reg1> = |0>, |reg2> = |1> LSB)
@@ -149,7 +157,7 @@ def shor_factorization(N, a, n_target, n_control, plot = False):
         measured_x = shor_algorithm(N, a, n_target, n_control, plot)
         frac = Fraction(measured_x/2**n_control).limit_denominator(N)   # continued fraction algorithm
         r = frac.denominator
-        print(f"Result: r = {r}")
+        print(f"Result: R = {r}")
         
         if measured_x != 0 and r % 2 == 0:
             guesses = [gcd(pow(a, r//2) - 1, N), gcd(pow(a, r//2) + 1, N)]
@@ -161,5 +169,8 @@ def shor_factorization(N, a, n_target, n_control, plot = False):
 
 # Main program - should run only with N=15, can modify a, n_target, n_control
 
-shor_factorization(15, 7, 4, 8, True)
+#shor_factorization(15, 7, 4, 3, True)
 
+#shor_factorization(15, 2, 4, 3, True)
+
+shor_factorization(15, 7, 4, 8, True)

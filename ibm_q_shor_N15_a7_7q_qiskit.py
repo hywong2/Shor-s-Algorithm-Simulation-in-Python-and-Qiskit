@@ -1,3 +1,8 @@
+# Author: Trung Nguyen
+# Affiliation: MSQT Student, San Jose State University
+# Contact: trung.nguyen03@sjsu.edu
+# Date: February 2026
+
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, transpile
 from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2 as Sampler
 from qiskit.visualization import plot_histogram

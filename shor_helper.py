@@ -1,3 +1,8 @@
+# Author: Trung Nguyen
+# Affiliation: MSQT Student, San Jose State University
+# Contact: trung.nguyen03@sjsu.edu
+# Date: February 2026
+
 # Helper function
 import matplotlib.pyplot as plt
 from fractions import Fraction
@@ -16,54 +21,89 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_marginal_quantum_state(state_vector, n_control, n_target, label="Quantum State"):
+def plot_marginal_quantum_state(
+    state_vector,
+    n_control,
+    n_target,
+    label="Quantum State"
+):
     """
-    Plots marginal magnitudes and phases with independent x-axis scaling.
-    
+    Plots marginal probability distributions for control and target registers.
+
     Args:
-        state_vector: Array-like, length 2**(n_control + n_target)
-        n_control: Number of qubits at MSB
-        n_target: Number of qubits at LSB
-        label: String label to display on the plot title
+        state_vector: Complex numpy array of shape (2**(n_control + n_target),)
+        n_control: Number of control qubits (MSBs)
+        n_target: Number of target qubits (LSBs)
+        label: Title of the entire figure
     """
-    # 1. Determine dimensions
+    # Dimensions
     dim_control = 1 << n_control
-    dim_target = 1 << n_target
-    
-    # 2. Reshape into (Rows=Control, Cols=Target) and get probabilities
-    # We use abs()**2 to get the probability from complex amplitudes
-    probs_2d = np.abs(state_vector).reshape((dim_control, dim_target))**2
-    
-    # 3. Calculate Marginals
+    dim_target  = 1 << n_target
+
+    # 2D probability matrix: rows = control, cols = target
+    probs_2d = np.abs(state_vector).reshape(dim_control, dim_target) ** 2
+
+    # Marginals
     marginal_control = np.sum(probs_2d, axis=1)
-    marginal_target = np.sum(probs_2d, axis=0)
-    
-    # 4. Plotting
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
-    fig.suptitle(label, fontsize=16, fontweight='bold')
-    
-    # Define colors
-    c_color = '#3498db'  # Nice Blue
-    t_color = '#e74c3c'  # Nice Red
-    
-    # Plot Control Register Marginals
-    # Setting edgecolor same as color removes the dark outline effect
-    ax1.bar(range(dim_control), marginal_control, color=c_color, edgecolor=c_color)
-    ax1.set_title(f"Control Register ({n_control} qubits)")
-    ax1.set_xlabel("State Value (x)")
-    ax1.set_ylabel("Marginal Probability")
-    ax1.grid(axis='y', linestyle='--', alpha=0.7)
-    
-    # Plot Target Register Marginals
-    ax2.bar(range(dim_target), marginal_target, color=t_color, edgecolor=t_color)
-    ax2.set_title(f"Target Register ({n_target} qubits)")
-    ax2.set_xlabel("State Value (y = f(x))")
-    ax2.set_ylabel("Marginal Probability")
-    ax2.grid(axis='y', linestyle='--', alpha=0.7)
-    
-    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    marginal_target  = np.sum(probs_2d, axis=0)
+
+    # ────────────────────────────────────────────────
+    #  Font sizes
+    # ────────────────────────────────────────────────
+    FONT_SUPTITLE = 20
+    FONT_TITLE    = 17
+    FONT_LABEL    = 15
+    FONT_TICK     = 12
+
+    # ────────────────────────────────────────────────
+    #  Figure with constrained layout
+    # ────────────────────────────────────────────────
+    fig, (ax1, ax2) = plt.subplots(
+        1, 2,
+        figsize=(15.5, 5.8),
+        constrained_layout=True
+    )
+
+    fig.suptitle(label, fontsize=FONT_SUPTITLE, fontweight='bold')
+
+    # Colors
+    color_control = '#3498db'
+    color_target  = '#e74c3c'
+
+    # ───── Control register ─────
+    ax1.bar(
+        range(dim_control),
+        marginal_control,
+        color=color_control,
+        edgecolor=color_control,
+        width=0.92
+    )
+    ax1.set_title(f"Control Register  ({n_control} qubits)", fontsize=FONT_TITLE)
+    ax1.set_xlabel("State value (x)", fontsize=FONT_LABEL)
+    ax1.set_ylabel("Marginal probability", fontsize=FONT_LABEL)
+    ax1.tick_params(axis='both', labelsize=FONT_TICK)
+    ax1.grid(axis='y', linestyle='--', alpha=0.65)
+
+    # ───── Target register ─────
+    ax2.bar(
+        range(dim_target),
+        marginal_target,
+        color=color_target,
+        edgecolor=color_target,
+        width=0.72
+    )
+    ax2.set_title(f"Target Register  ({n_target} qubits)", fontsize=FONT_TITLE)
+    ax2.set_xlabel("State value (y)", fontsize=FONT_LABEL)
+    ax2.set_ylabel("Marginal probability", fontsize=FONT_LABEL)
+    ax2.tick_params(axis='both', labelsize=FONT_TICK)
+    ax2.grid(axis='y', linestyle='--', alpha=0.65)
+
+    # ───── Adaptive y-limits with small headroom ─────
+    ax1.set_ylim(0, marginal_control.max() * 1.12 if marginal_control.max() > 0 else 1.0)
+    ax2.set_ylim(0, marginal_target.max()  * 1.12 if marginal_target.max()  > 0 else 1.0)
+
     plt.show()
-    
+                
 def print_state_vector(state, n_control, n_target, threshold=1e-8, top_k=None):
     """
     Prints the state vector in a readable format.
